@@ -1,5 +1,4 @@
-package bluedog.bankfire.tasks;
-
+package bluedog.fleshcrawler.tasks;
 
 import org.powerbot.script.rt4.ClientAccessor;
 import org.powerbot.script.rt4.ClientContext;
@@ -16,6 +15,9 @@ public abstract class Task extends ClientAccessor {
 
     public abstract void execute();
 
+    boolean inCombat() {
+        return ctx.players.local().inCombat();
+    }
 
     public void toggleRun() {
         if (ctx.movement.energyLevel() >= getRand(25, 100)) {

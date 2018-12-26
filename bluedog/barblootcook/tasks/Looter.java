@@ -6,10 +6,28 @@ import org.powerbot.script.rt4.GroundItem;
 
 public class Looter extends Task {
 
-    public int fishLooted = 0;
-
-    private GroundItem getGroundLoot(){
+    private GroundItem getGroundLoot() {
         return ctx.groundItems.select().id(RAW_SALMON, RAW_TROUT).nearest().poll();
+    }
+
+    private void turnCameraToInterest(GroundItem loot) {
+        if (!loot.inViewport()) {
+            ctx.camera.turnTo(loot);
+        }
+    }
+
+    private void seeIfFishAvailable(GroundItem loot) {
+        if (!loot.valid()) {
+            System.out.println("No dropped fish in sight");
+            return;
+        }
+    }
+
+    private void moveToItem(GroundItem loot) {
+        if (ctx.players.local().tile().distanceTo(loot.tile()) > 2) {
+            ctx.movement.step(loot);
+            Condition.wait(() -> !ctx.players.local().inMotion(), 750, 3);
+        }
     }
 
     public Looter(ClientContext ctx) {
@@ -27,15 +45,10 @@ public class Looter extends Task {
         toggleRun();
 
         GroundItem loot = getGroundLoot();
-        if(!loot.inViewport()){
-            ctx.camera.turnTo(loot);
-        }
-        if(ctx.players.local().tile().distanceTo(loot.tile()) > 8){
-            ctx.movement.step(loot);
-        }
+        seeIfFishAvailable(loot);
+        turnCameraToInterest(loot);
+        moveToItem(loot);
         loot.interact("Take", loot.name());
-        fishLooted++;
-        Condition.sleep(getRand(100,600));
-
     }
+
 }

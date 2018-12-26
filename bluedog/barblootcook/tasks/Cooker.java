@@ -5,7 +5,7 @@ import org.powerbot.script.rt4.*;
 
 public class Cooker extends Task {
 
-    private boolean hasUncookedFood(){
+    private boolean hasUncookedFood() {
         return ctx.inventory.select().id(RAW_TROUT, RAW_SALMON).count() > 0;
     }
 
@@ -23,19 +23,18 @@ public class Cooker extends Task {
         GameObject fire = ctx.objects.select().name("Fire").nearest().poll();
         ctx.camera.turnTo(fire);
 
-        if(ctx.players.local().tile().distanceTo(fire.tile()) > 5){
+        if (ctx.players.local().tile().distanceTo(fire.tile()) > 5) {
             ctx.movement.step(fire);
         }
 
         Item food = ctx.inventory.select().id(RAW_SALMON, RAW_TROUT).poll();
+        int itemInventoryCount = ctx.inventory.select().id(food.id()).count();
+        System.out.println("Inventory: "+ food.name() + " ("+itemInventoryCount+")");
 
         food.interact("Use");
         fire.interact("Use", "Fire");
-        Condition.sleep(getRand(400,800));
+        Condition.wait(() -> ctx.widgets.component(270, 14).visible(), 1000, 5);
         ctx.widgets.component(270, 14).click();
-        Condition.sleep(getRand(500,1200));
-
-        Condition.wait(() -> ctx.players.local().animation() != 897, 5000, 10);
-
+        Condition.wait(() -> ctx.inventory.select().id(food.id()).count() == 0 || ctx.chat.canContinue(), 2500, itemInventoryCount);
     }
 }
