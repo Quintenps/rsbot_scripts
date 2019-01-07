@@ -1,6 +1,6 @@
-package bluedog.fleshcrawler;
+package bluedog.giantspider;
 
-import bluedog.fleshcrawler.tasks.*;
+import bluedog.giantspider.tasks.*;
 import org.powerbot.script.PaintListener;
 import org.powerbot.script.PollingScript;
 import org.powerbot.script.Script;
@@ -11,7 +11,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@Script.Manifest(name = "bluedog's fleshcrawler", description = "", properties = "author=bluedog; topic=118146; client=4;")
+@Script.Manifest(name = "bluedog's giantspider", description = "", properties = "author=bluedog; topic=118146; client=4;")
 
 public class Main extends PollingScript<ClientContext> implements PaintListener {
     List<Task> tasks = new ArrayList<Task>();
@@ -19,7 +19,6 @@ public class Main extends PollingScript<ClientContext> implements PaintListener 
     private final int LVL_ATTACK_START = ctx.skills.level(Constants.SKILLS_ATTACK);
     private final int LVL_STRENGTH_START = ctx.skills.level(Constants.SKILLS_STRENGTH);
     private final int LVL_DEFENCE_START = ctx.skills.level(Constants.SKILLS_DEFENSE);
-    private final int LVL_HITPOINTS_START = ctx.skills.level(Constants.SKILLS_HITPOINTS);
 
     private String getRunningTime() {
         long milliseconds = this.getTotalRuntime();
@@ -32,12 +31,14 @@ public class Main extends PollingScript<ClientContext> implements PaintListener 
     @Override
     public void start() {
         Healer heal = new Healer(ctx);
-//        Looter loot = new Looter(ctx);
+        Banker bank = new Banker(ctx);
         Combat combat = new Combat(ctx);
+//        AntiBan ab = new AntiBan(ctx);
 
         tasks.add(heal);
-//        tasks.add(loot);
+        tasks.add(bank);
         tasks.add(combat);
+//        tasks.add(ab);
     }
 
     @Override
@@ -59,11 +60,10 @@ public class Main extends PollingScript<ClientContext> implements PaintListener 
     public void repaint(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics; //get 2d graphics
 
-        g.drawString("bluedog's flesh crawler", 20, 80);
+        g.drawString("bluedog's giant spider", 20, 80);
         g.drawString("Time : " + getRunningTime(), 20, 100);
         g.drawString("Attack: "+ ctx.skills.level(Constants.SKILLS_ATTACK) + " (+"+(ctx.skills.level(Constants.SKILLS_ATTACK) - LVL_ATTACK_START)+")", 20, 120);
         g.drawString("Strength: "+ ctx.skills.level(Constants.SKILLS_STRENGTH) + " (+"+(ctx.skills.level(Constants.SKILLS_STRENGTH) - LVL_STRENGTH_START)+")", 20, 140);
         g.drawString("Defence: "+ ctx.skills.level(Constants.SKILLS_DEFENSE) + " (+"+(ctx.skills.level(Constants.SKILLS_DEFENSE) - LVL_DEFENCE_START)+")", 20, 160);
-        g.drawString("Hitpoints: "+ ctx.skills.level(Constants.SKILLS_HITPOINTS) + " (+"+(ctx.skills.level(Constants.SKILLS_HITPOINTS) - LVL_HITPOINTS_START)+")", 20, 180);
     }
 }

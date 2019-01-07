@@ -1,11 +1,10 @@
-package bluedog.fleshcrawler.tasks;
+package bluedog.giantspider.tasks;
 
 import org.powerbot.script.rt4.ClientContext;
 import org.powerbot.script.rt4.Item;
 
 public class Healer extends Task {
-    private final int FOOD_ID = 373;
-    private int foodCount = ctx.inventory.select().id(FOOD_ID).count();
+    private final int FOOD_ID = 379;
 
     public Healer(ClientContext ctx) {
         super(ctx);
@@ -19,7 +18,11 @@ public class Healer extends Task {
 
     @Override
     public boolean activate() {
-        return ctx.combat.healthPercent() < getRand(30,55) && foodCount > 0;
+        int foodCount = ctx.inventory.select().id(FOOD_ID).count();
+        int number = getRand(30,80);
+        System.out.println(foodCount);
+        System.out.println(ctx.combat.healthPercent() < number);
+        return ctx.combat.healthPercent() < number  && foodCount > 0;
     }
 
     @Override

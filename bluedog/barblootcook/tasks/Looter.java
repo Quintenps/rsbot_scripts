@@ -36,7 +36,7 @@ public class Looter extends Task {
 
     @Override
     public boolean activate() {
-        return !hasFullInventory();
+        return !hasFullInventory() && !ctx.players.local().inMotion();
     }
 
     @Override

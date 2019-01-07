@@ -1,4 +1,4 @@
-package bluedog.fleshcrawler.tasks;
+package bluedog.giantspider.tasks;
 
 import org.powerbot.script.rt4.ClientAccessor;
 import org.powerbot.script.rt4.ClientContext;

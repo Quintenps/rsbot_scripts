@@ -23,7 +23,9 @@ public class Dropper extends Task {
     public void execute() {
         Item[] inventoryItem = ctx.inventory.items();
         for (Item curItem : inventoryItem) {
-            curItem.interact("Drop");
+            ctx.input.send("{VK_SHIFT down}");
+            curItem.click();
+            ctx.input.send("{VK_SHIFT up}");
         }
 
         Condition.sleep(getRand(100, 400));

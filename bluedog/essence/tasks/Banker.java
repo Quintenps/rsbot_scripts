@@ -1,6 +1,6 @@
 package bluedog.essence.tasks;
 
-import bluedog.bankfire.Walker;
+import bluedog.essence.Walker;
 import org.powerbot.script.Condition;
 import org.powerbot.script.Tile;
 import org.powerbot.script.rt4.ClientContext;

@@ -1,4 +1,4 @@
-package bluedog.fleshcrawler;
+package bluedog.giantspider;
 
 import org.powerbot.script.Condition;
 import org.powerbot.script.Random;
@@ -46,7 +46,7 @@ public class Walker {
                 }
                 index = i;                                                  //Suggested next tile was the best option as it is not very close, and reachable.
                 break;
-            } else if(t[i].distanceTo(p)<8){
+            } else if (t[i].distanceTo(p) < 8) {
                 index = i;                                                  //if next closest tile is <8 and it's not the next tile then we can assume the next tile is probably not correct, perhaps no reachable tile available...
                 break;
             }
@@ -75,7 +75,7 @@ public class Walker {
         final Player p = ctx.players.local();
         double distance = Double.POSITIVE_INFINITY;
         GameObject obstacle = null;
-        for (GameObject go : ctx.objects.select(5).name(Pattern.compile("(staircase)|(ladder)|((.*)?door)|(gate(.*)?)", Pattern.CASE_INSENSITIVE))) {                            //Changed to filter by name else all the filtering in the next part takes much too long to be considered effective..
+        for (GameObject go : ctx.objects.select(5).name(Pattern.compile("(staircase)|(entrance)|(portal)|(oozing barrier)|(ladder)|((.*)?vine)|(gate(.*)?)", Pattern.CASE_INSENSITIVE))) {                            //Changed to filter by name else all the filtering in the next part takes much too long to be considered effective..
             double calcDist = go.tile().distanceTo(new Tile(nextTile.x(), nextTile.y(), p.tile().floor()));
             /*
              * Check if the next tile is on a different floor. If it is then
@@ -83,10 +83,11 @@ public class Walker {
              * to filter objects by actions 'Climb-up' or 'Climb-down'
              */
             if (nextTile.floor() != p.tile().floor()) {
-                if (go.type() == GameObject.Type.INTERACTIVE && go.actions().length>0) {
+                if (go.type() == GameObject.Type.INTERACTIVE && go.actions().length > 0) {
                     if (nextTile.floor() > p.tile().floor()) {                      //Need to climb up.
                         if (calcDist < distance && reachable(go)) {
                             for (String s : go.actions()) {
+                                System.out.println("WALKER -> GOING UP");
                                 if (s != null && !s.equals("null") && s.contains("Climb-up")) {
                                     obstacle = go;
                                     distance = calcDist;                                                            //Set the distance to the object so we can compare future objects against it to determine the best.
@@ -97,7 +98,8 @@ public class Walker {
                     } else {                                                     //Need to climb down.
                         if (calcDist < distance && reachable(go)) {
                             for (String s : go.actions()) {
-                                if (s != null && !s.equals("null") && s.contains("Climb-down")) {
+                                System.out.println("WALKER -> GOING DOWN");
+                                if (s != null && !s.equals("null") && (s.contains("Climb-down") || s.contains("Use"))) {
                                     obstacle = go;
                                     distance = calcDist;                                                            //Set the distance to the object so we can compare future objects against it to determine the best.
                                     break;
@@ -106,11 +108,12 @@ public class Walker {
                         }
                     }
                 }
-            } else if (nextTile.distanceTo(ctx.players.local()) > 50){          //we can now assume that we need to go up or down .. not flawless whatsoever
+            } else if (nextTile.distanceTo(ctx.players.local()) > 50) {          //we can now assume that we need to go up or down .. not flawless whatsoever
                 if (go.type() != GameObject.Type.BOUNDARY) {
                     for (String s : go.actions()) {
                         if (go.tile().distanceTo(nextTile) + go.tile().distanceTo(p) < distance && reachable(go)) {
-                            if (s != null && !s.equals("null") && (s.contains("Climb-up") || s.contains("Climb-down") || s.contains("Enter"))) {
+                            System.out.println("WALKER -> GUESSING");
+                            if (s != null && !s.equals("null") && (s.contains("Use") || s.contains("Climb-up") || s.contains("Climb-down") || s.contains("Enter"))) {
                                 obstacle = go;
                                 distance = go.tile().distanceTo(nextTile) + go.tile().distanceTo(p);              //Set the distance to the object so we can compare future objects against it to determine the best.
                                 break;
@@ -119,13 +122,16 @@ public class Walker {
                     }
                 }
             } else {
+                System.out.println("WALKER -> ELSE ELSE?");
                 /*
                  * Floor was the same so we are blocked by a door, or gate.
                  * These are boundary objects, however we need to check the name
                  * as some random boundary objects appear with the name null.
                  */
-                if (go.type() == GameObject.Type.BOUNDARY) {
+                if (go.type() == GameObject.Type.BOUNDARY || go.type() == GameObject.Type.INTERACTIVE) {
+                    System.out.println(go.type());
                     if (calcDist < distance && reachable(go)) {
+                        System.out.println("reachable");
                         obstacle = go;
                         distance = calcDist;                                                            //Set the distance to the object so we can compare future objects against it to determine the best.
                     }
@@ -139,25 +145,37 @@ public class Walker {
 
         if (obstacle.inViewport()) {
             obstacle.bounds(getBounds(obstacle));
-            if (nextTile.floor() > p.tile().floor()) {                                                      //Going up.
+            if (nextTile.floor() > p.tile().floor()) {
+                //Going up.
                 if (obstacle.interact("Climb-up")) {
                     return handlePostInteraction();
                 }
-            } else if (nextTile.floor() < p.tile().floor()) {                                               //Going down.
+            } else if (nextTile.floor() < p.tile().floor()) {
+                if (obstacle.interact("Use")) {
+                    return handlePostInteraction();
+                }//Going down.
                 if (obstacle.interact("Climb-down")) {
                     return handlePostInteraction();
                 }
-            } else if (nextTile.distanceTo(ctx.players.local()) > 50){                                      //This is just guessing
+            } else if (nextTile.distanceTo(ctx.players.local()) > 50) {
+                //This is just guessing
+                if (obstacle.interact("Use")) {
+                    return handlePostInteraction();
+                }
                 if (obstacle.interact("Climb-")) {
                     return handlePostInteraction();
                 }
-            }else {
+            } else {
+                if (obstacle.interact("Use")) {
+                    return handlePostInteraction();
+                }//Going down.
                 if (obstacle.interact("Open")) {                                                        //Going through.
                     return handlePostInteraction();
                 }
             }
         } else {
-            if (ctx.movement.step(obstacle)) {                                                           //Can't see the obstacle, step towards it.
+            if (ctx.movement.step(obstacle)) {
+                //Can't see the obstacle, step towards it.
                 ctx.camera.turnTo(obstacle);                                                            //and turn the camera.
                 Condition.wait(new Callable<Boolean>() {
                     @Override
@@ -217,9 +235,9 @@ public class Walker {
      */
     public boolean walkPath(Tile[] t) {
         Tile ti = getNextTile(t);
-        Tile nt = ti.derive(Random.nextInt(-1,1),Random.nextInt(-1,1));
+        Tile nt = ti.derive(Random.nextInt(-1, 1), Random.nextInt(-1, 1));
 
-        if(nt.matrix(ctx).reachable()){
+        if (nt.matrix(ctx).reachable()) {
             //System.out.println("Randomized.. " + ti + " became " + nt);
             return ctx.movement.step(nt);
         }
@@ -296,6 +314,8 @@ public class Walker {
             return Type.DOOR;
         } else if (s.matches("(?i)(gate(.*)?)")) {
             return Type.GATE;
+        } else if (s.equalsIgnoreCase("portal")) {
+            return Type.PORTAL;
         } else if (s.equalsIgnoreCase("ladder")) {
             return Type.LADDER;
         }
@@ -308,14 +328,14 @@ public class Walker {
      * @param t
      * @return
      */
-    public boolean walkPathReverse(Tile[] t){
+    public boolean walkPathReverse(Tile[] t) {
         t = ctx.movement.newTilePath(t).reverse().toArray();
 
         return walkPath(t);
     }
 
     public enum Type {
-        DOOR, GATE, LADDER, TEAPOT
+        DOOR, GATE, LADDER, TEAPOT, PORTAL
     }
 
 }
